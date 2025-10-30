@@ -1,0 +1,66 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql"; url = env("DATABASE_URL"); directUrl = env("DIRECT_URL") }
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  profile   Profile?
+  likes     Like[]     @relation("likes")
+  likedBy   Like[]     @relation("likedBy")
+  matchesA  Match[]    @relation("matchesA")
+  matchesB  Match[]    @relation("matchesB")
+  messages  Message[]
+}
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  displayName String
+  bio         String?
+  birthDate   DateTime?
+  gender      String?
+  location    String?
+  interests   Interest[]
+  photos      Photo[]
+  createdAt   DateTime @default(now())
+}
+model Interest {
+  id        String  @id @default(cuid())
+  name      String
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id])
+}
+model Photo {
+  id        String  @id @default(cuid())
+  url       String
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id])
+}
+model Like {
+  id        String @id @default(cuid())
+  fromId    String
+  toId      String
+  from      User   @relation("likes", fields: [fromId], references: [id])
+  to        User   @relation("likedBy", fields: [toId], references: [id])
+  createdAt DateTime @default(now())
+  @@unique([fromId, toId])
+}
+model Match {
+  id        String @id @default(cuid())
+  userAId   String
+  userBId   String
+  userA     User   @relation("matchesA", fields: [userAId], references: [id])
+  userB     User   @relation("matchesB", fields: [userBId], references: [id])
+  createdAt DateTime @default(now())
+  @@unique([userAId, userBId])
+}
+model Message {
+  id        String   @id @default(cuid())
+  matchId   String
+  fromId    String
+  content   String
+  createdAt DateTime @default(now())
+  from      User     @relation(fields: [fromId], references: [id])
+}
